@@ -1,15 +1,33 @@
 # ==========================================
-# Estágio 1: Build com ambiente Flutter pré-instalado
+# Estágio 1: Build da aplicação Flutter Web
 # ==========================================
-FROM ghcr.io/cirrusci/flutter:stable AS build-stage
+FROM debian:bookworm-slim AS build-stage
 
-USER root
+# Instala dependências básicas do sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    unzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Resolve o erro de permissões do Render:
+# Subtitui o 'tar' por um script que força a opção '--no-same-owner'
+RUN mv /usr/bin/tar /usr/bin/tar-real && \
+    echo '#!/bin/sh' > /usr/bin/tar && \
+    echo 'exec /usr/bin/tar-real --no-same-owner --no-same-permissions "$@"' >> /usr/bin/tar && \
+    chmod +x /usr/bin/tar
+
+# Baixa o Flutter SDK
+RUN git clone https://github.com/flutter/flutter.git -b stable /sdks/flutter
+ENV PATH="/sdks/flutter/bin:${PATH}"
+
 WORKDIR /app
 
-# Copia os arquivos do seu projeto
+# Copia os arquivos do projeto
 COPY . .
 
-# Baixa as dependências do Dart/Flutter e compila a Web
+# Compila o projeto para Web
 RUN flutter pub get
 RUN flutter build web --release
 
