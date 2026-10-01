@@ -15,8 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN git clone https://github.com/flutter/flutter.git -b stable /sdks/flutter
 ENV PATH="/sdks/flutter/bin:${PATH}"
 
-# Executa pré-configuração do Flutter
-RUN flutter doctor
+# Configura o Flutter estritamente para Web (evita baixar Gradle e Android SDK)
+RUN flutter config --no-analytics && \
+    flutter config --enable-web && \
+    flutter precache --web
 
 WORKDIR /app
 
