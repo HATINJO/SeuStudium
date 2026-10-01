@@ -4,9 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-RUN flutter channel stable
-RUN flutter upgrade
-
 RUN flutter pub get
 RUN flutter build web --release
 
