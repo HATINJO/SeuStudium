@@ -1,29 +1,15 @@
 # ==========================================
-# Estágio 1: Build da aplicação Flutter Web
+# Estágio 1: Build com ambiente Flutter pré-instalado
 # ==========================================
-FROM debian:bookworm-slim AS build-stage
+FROM ghcr.io/cirrusci/flutter:stable AS build-stage
 
-# Instala dependências do sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    git \
-    unzip \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
-# Baixa o SDK do Flutter (versão estável)
-RUN git clone https://github.com/flutter/flutter.git -b stable /sdks/flutter
-ENV PATH="/sdks/flutter/bin:${PATH}"
-
-# Configura o Flutter estritamente para Web (evita baixar Gradle e Android SDK)
-RUN flutter config --no-analytics && \
-    flutter config --enable-web && \
-    flutter precache --web
-
+USER root
 WORKDIR /app
 
-# Copia os arquivos e gera a build de produção
+# Copia os arquivos do seu projeto
 COPY . .
+
+# Baixa as dependências do Dart/Flutter e compila a Web
 RUN flutter pub get
 RUN flutter build web --release
 
@@ -32,10 +18,7 @@ RUN flutter build web --release
 # ==========================================
 FROM nginx:alpine AS production-stage
 
-# Copia os arquivos gerados pelo Flutter para a pasta do NGINX
 COPY --from=build-stage /app/build/web /usr/share/nginx/html
-
-# Copia as regras de redirecionamento do NGINX
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
